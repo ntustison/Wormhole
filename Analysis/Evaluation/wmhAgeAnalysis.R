@@ -12,7 +12,6 @@ numberOfRuns <- 100
 trainingPortion <- 0.8
 verbose <- TRUE
 
-algorithms <- c( "Sysu", "SysuAxial", "UCD", "Octant", "Slicewise7mb", "Slicewise300mb", "SlicewiseT1Only", "Combined" )
 covariates <- c( "Gender", "Education", "BrainVolume", "Diagnosis" )
 
 ################
@@ -21,12 +20,16 @@ covariates <- c( "Gender", "Education", "BrainVolume", "Diagnosis" )
 #
 ################
 
-baseDirectory <- "/Users/ntustison/Data/WMH/"
+baseDirectory <- "./"
+figuresDirectory <- paste0( baseDirectory, "../../Text/Figures/" )
 
-wmhDataFrame <- read.csv( paste0( baseDirectory, "/Scripts/wmhVolumes.csv" ) )
-demoDataFrame <- read.csv( paste0( baseDirectory, "/Scripts/ADNI2_3_neuropsych_1423subj.csv" ) )
+wmhDataFrame <- read.csv( paste0( baseDirectory, "../Data/wmhVolumes.csv" ) )
+wmhDataFrame$Algorithm <- as.factor( wmhDataFrame$Algorithm )
+algorithms <- levels( wmhDataFrame$Algorithm )
+
+demoDataFrame <- read.csv( paste0( baseDirectory, "../Data/ADNI2_3_neuropsych_1423subj.csv" ) )
+
 allDataFrame <- merge( wmhDataFrame, demoDataFrame, by.x = "Subject", by.y = "Image_ID" )
-allDataFrame <- allDataFrame[complete.cases(allDataFrame),]
 
 ################
 #
@@ -34,8 +37,6 @@ allDataFrame <- allDataFrame[complete.cases(allDataFrame),]
 #
 ################
 
-
-numberOfSubjects <- nrow( allDataFrame )
 
 algorithmRmse <- array( data = 0, dim = c( numberOfRuns, length( algorithms ) ) )
 for( i in seq.int( length( algorithms ) ) )
@@ -45,15 +46,22 @@ for( i in seq.int( length( algorithms ) ) )
     {
     pb <- txtProgressBar( min = 1, max = numberOfRuns, style = 3 )
     }
-  ageFormula <- as.formula( paste0( "Age_atFLAIR ~ ", algorithms[i], " + ", paste( covariates, collapse = "+" ) ) ) 
+
+  perAlgorithmDataFrame <- allDataFrame[allDataFrame$Algorithm == algorithms[i],]
+  perAlgorithmDataFrame <- perAlgorithmDataFrame[complete.cases( perAlgorithmDataFrame ),]
+  perAlgorithmDataFrame$TotalWmhVolume <- rowSums( perAlgorithmDataFrame[,6:13])
+
+  numberOfSubjects <- nrow( perAlgorithmDataFrame )
+  
+  ageFormula <- as.formula( paste0( "Age_atFLAIR ~ TotalWmhVolume + ", paste( covariates, collapse = "+" ) ) ) 
 
   for( j in seq.int( numberOfRuns ) )
     {
     setTxtProgressBar( pb, j )  
     trainingIndices <- sample.int( numberOfSubjects, size = floor( trainingPortion * numberOfSubjects ) )
       
-    trainingData <- allDataFrame[trainingIndices,]
-    testingData <- allDataFrame[-trainingIndices,]
+    trainingData <- perAlgorithmDataFrame[trainingIndices,]
+    testingData <- perAlgorithmDataFrame[-trainingIndices,]
     
     rf <- randomForest( ageFormula, data = trainingData, importance = TRUE )
 
@@ -65,8 +73,6 @@ for( i in seq.int( length( algorithms ) ) )
     }
   cat( "\n" )  
   }  
-
-# algorithms <- c( "Sysu", "SysuAxial", "UCD", "Octant", "Slicewise7mb", "Slicewise300mb", "SlicewiseT1Only", "Combined" )
 
 colnames( algorithmRmse ) <- algorithms
 
@@ -87,5 +93,5 @@ for( i in seq.int( length( algorithms ) ) )
 g <- ggplot( data = algorithmRmseDataFrame, aes( RMSE, fill = Algorithm, colour = Algorithm ) ) +
         geom_density( alpha = 0.1 ) +
         ggtitle( "Age prediction")
-ggsave( paste0( "~/Desktop/wmhAgeRmse.pdf" ), g, width = 8, height = 5, units = "in" )
-colMeans( algorithmRmse )
+ggsave( paste0( figuresDirectory, "wmhAgeRmse.pdf" ), g, width = 8, height = 5, units = "in" )
+cat( "\n", colnames( algorithmRmse ), "\n", colMeans( algorithmRmse ), "\n\n" )
