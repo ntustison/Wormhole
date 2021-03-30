@@ -3,8 +3,8 @@ library( ANTsRNet )
 library( ggplot2 )
 
 
-region <- c( "total", "periventricular", "deep", "frontal", "parietal", "temporal", "occipital" )
-doRelative <- TRUE
+region <- c( "total", "deep", "periventricular", "frontal", "parietal", "temporal", "occipital" )
+doRelative <- FALSE
 
 baseDirectory <- "./"
 figuresDirectory <- paste0( baseDirectory, "../../Text/Figures/" )

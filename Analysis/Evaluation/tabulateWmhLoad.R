@@ -9,7 +9,7 @@ octants <- list.files( path = baseDirectory, pattern = "EwDavidOctantWmhSegmenta
 wmhDataFrame <- data.frame()
 
 regions <- as.vector( outer( c( "frontal", "parietal", "temporal", "occipital" ), 
-  c( "deep", "periventricular" ), paste, sep = "." ) )
+  c( "periventricular", "deep" ), paste, sep = "." ) )
 segmentationNames <- c( "octant", "sliceWise7mb", "sliceWise300mb", "sliceWiseT1Only", "combined", "sysu",  "sysuAxial", "ucd" )  
 
 pb <- txtProgressBar( min = 0, max = length( octants ), style = 3 )
