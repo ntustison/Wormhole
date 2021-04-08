@@ -51,28 +51,29 @@ getEvaluationMeasures <- function( sourceImage, targetImage )
 
   # subtract 1 for the background
 
-  numWmhSource <- length( unique( ccSource ) ) - 1
+  numWmhIntersection <- length( unique( sourceImage * ccTarget ) ) - 1
   numWmhTarget <- length( unique( ccTarget ) ) - 1
 
   recall <- 1.0
   if( numWmhTarget > 0 )
     {
-    recall <- numWmhSource / numWmhTarget
+    recall <- numWmhIntersection / numWmhTarget
     }
 
-   ccPrecision <- labelClusters( ccSource * targetImage, minClusterSize = 0, fullyConnected = TRUE )
-   numWmhIntersection <- length( unique( ccPrecision ) ) - 1
-   precision <- 1.0
-   if( numWmhTarget > 0 )
-     {
-     precision <- numWmhIntersection / numWmhTarget
-     }
+  numWmhIntersection <- length( unique( ccSource * targetImage ) ) - 1
+  numWmhSource <- length( unique( ccSource ) ) - 1
 
-   f1 <- 0
-   if( precision + recall > 0.0 )
-     {
-     f1 <- 2.0 * ( precision * recall ) / ( precision + recall )
-     }
+  precision <- 1.0
+  if( numWmhTarget > 0 )
+    {
+    precision <- numWmhIntersection / numWmhSource
+    }
+
+  f1 <- 0
+  if( precision + recall > 0.0 )
+    {
+    f1 <- 2.0 * ( precision * recall ) / ( precision + recall )
+    }
 
   return( list( DiceOverlap = dice,
                 HausdorffDistance = hausdorff$Distance,
